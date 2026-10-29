@@ -8,7 +8,7 @@ app.use(bodyParser.json());
 // البيانات التي أخذناها من ميتا
 const TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const VERIFY_TOKEN = "alsaed_secure_token_2026";
 
 // 1. نقطة التحقق (Webhook Verification) لربط ميتا بالسيرفر
 app.get('/webhook', (req, res) => {
