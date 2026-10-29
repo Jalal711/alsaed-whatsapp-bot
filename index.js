@@ -101,3 +101,7 @@ app.get('/webhook', (req, res) => {
         res.sendStatus(400);
     }
 });
+// مسار إبقاء الخادم نشطاً وفورياً
+app.get('/', (req, res) => {
+    res.status(200).send('Bot is active and ready!');
+});
