@@ -122,4 +122,23 @@ app.get('/webhook', (req, res) => {
     } else {
         res.sendStatus(400);
     }
+});app.get('/webhook', (req, res) => {
+    const VERIFY_TOKEN = "alsaed_secure_token_2026";
+    
+    // قراءة البيانات المرسلة من ميتا
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    // التحقق من صحة الوضع والرمز
+    if (mode && token) {
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('WEBHOOK_VERIFIED');
+            // إرسال الرمز مباشرة مع حالة 200
+            return res.status(200).send(challenge);
+        } else {
+            return res.sendStatus(403);
+        }
+    }
+    return res.sendStatus(400);
 });
