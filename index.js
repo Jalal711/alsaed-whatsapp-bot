@@ -1,170 +1,83 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+from flask import Flask, request, jsonify
 
-const app = express();
-app.use(bodyParser.json());
+app = Flask(__name__)
 
-// البيانات التي أخذناها من ميتا
-const TOKEN = process.env.WHATSAPP_TOKEN;
-const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
-const VERIFY_TOKEN = "alsaed_secure_token_2026";
+# توكن التحقق الخاص بك ورابط الواتساب (يمكنك توليدها مجاناً من منصة Meta Developers)
+VERIFY_TOKEN = "alsaid_solar_token_2026"
 
-// 1. نقطة التحقق (Webhook Verification) لربط ميتا بالسيرفر
-app.get('/webhook', (req, res) => {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
-            res.status(200).send(challenge);
-        } else {
-            res.sendStatus(403);
-        }
-    }
-});app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = "alsaed_secure_token_2026";
+@app.route("/webhook", methods=["GET"])
+def verify_webhook():
+    # التحقق من الـ Webhook مع واتساب
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
     
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
+    if mode and token:
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        else:
+            return "Verification failed", 403
+    return "Hello World", 200
 
-    if (mode && token === VERIFY_TOKEN) {
-        res.status(200).send(challenge);
-    } else {
-        res.sendStatus(403);
-    }
-});
-
-
-// 2. استقبال الرسائل من العملاء والرد عليها تلقائياً
-app.post('/webhook', async (req, res) => {
-    try {
-        const body = req.body;
-
-        if (body.object) {
-            if (
-                body.entry &&
-                body.entry[0].changes &&
-                body.entry[0].changes[0].value.messages &&
-                body.entry[0].changes[0].value.messages[0]
-            ) {
-                const phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id;
-                const from = body.entry[0].changes[0].value.messages[0].from; // رقم العميل
-                const msg_body = body.entry[0].changes[0].value.messages[0].text.body; // نص الرسالة
-
-                console.log(`رسالة من ${from}: ${msg_body}`);
-
-                // الرد التلقائي لخدمات الصاعد للطاقة الشمسية وأنظمة التحكم
-                let replyText = "مرحباً بك في شركة الصاعد لأنظمة الطاقة الشمسية والتحكم (ATS). كيف يمكننا مساعدتك اليوم؟";
-                
-                if (msg_body.includes("طاقة") || msg_body.includes("شمسية")) {
-                    replyText = "نحن نقدم أفضل أنظمة الطاقة الشمسية المتكاملة للمنازل والشركات. هل تود معرفة الأسعار؟";
-                } else if (msg_body.includes("ATS") || msg_body.includes("تحويل")) {
-                    replyText = "أجهزة التحكم الآلي (ATS) لدينا مصممة خصيصاً لضمان استقرار التيار الكهربائي وحماية الأجهزة.";
-                }
-
-                // إرسال الرد عبر واتساب API
-                await axios({
-                    method: 'POST',
-                    url: `https://graph.facebook.com/v17.0/${phone_number_id}/messages`,
-                    headers: {
-                        'Authorization': `Bearer ${TOKEN}`,
-                        'Content-Type': 'application/json'
-                    },
-                    data: {
-                        messaging_product: 'whatsapp',
-                        to: from,
-                        text: { body: replyText },
-                    },
-                });
-            }
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(404);
-        }
-    } catch (error) {
-        console.error("Error handling webhook:", error);
-        res.sendStatus(500);
-    }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is listening on port ${PORT}`);
-});
-// نقطة التحقق (Webhook Verification)
-app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = "alsaed_secure_token_2026";
-
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
-            res.status(200).send(challenge);
-        } else {
-            res.sendStatus(403);
-        }
-    } else {
-        res.sendStatus(400);
-    }
-});
-// مسار إبقاء الخادم نشطاً وفورياً
-app.get('/', (req, res) => {
-    res.status(200).send('Bot is active and ready!');
-});
-app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = "alsaed_secure_token_2026";
-
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
-            res.status(200).send(challenge);
-        } else {
-            res.sendStatus(403);
-        }
-    } else {
-        res.sendStatus(400);
-    }
-});app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = "alsaed_secure_token_2026";
+@app.route("/webhook", methods=["POST"])
+def handle_whatsapp_message():
+    data = request.get_json()
     
-    // قراءة البيانات المرسلة من ميتا
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
+    try:
+        # استخراج الرسالة الواردة من العميل
+        message_entry = data["entry"][0]["changes"][0]["value"]
+        if "messages" in message_entry:
+            sender_phone = message_entry["messages"][0]["from"]
+            message_body = message_entry["messages"][0]["text"]["body"].lower()
+            
+            # معالجة الردود التلقائية بناءً على الكلمات المفتاحية
+            response_text = generate_auto_response(message_body)
+            
+            # إرسال الرد التلقائي (هنا يتم استدعاء دالة الإرسال عبر WhatsApp API)
+            send_whatsapp_message(sender_phone, response_text)
+            
+    except Exception as e:
+        print(f"Error handling message: {e}")
+        
+    return jsonify({"status": "success"}), 200
 
-    // التحقق من صحة الوضع والرمز
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
-            // إرسال الرمز مباشرة مع حالة 200
-            return res.status(200).send(challenge);
-        } else {
-            return res.sendStatus(403);
-        }
-    }
-    return res.sendStatus(400);
-});
-app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = "alsaed_secure_token_2026";
+def generate_auto_response(text):
+    # تحليل الكلمات المفتاحية والرد المناسب حسب تفاصيل مشروع الصاعد
+    if any(word in text for word in ["طاقة", "الواح", "شمسية", "1", "اسعار الطاقة"]):
+        return (
+            "☀️ *أسعار تركيب منظومة الطاقة الشمسية (شاملة التركيب فقط):*\n\n"
+            "• من 3 إلى 4 ألواح: 400,000 جنيه\n"
+            "• من 6 إلى 8 ألواح: 600,000 جنيه\n"
+            "• من 9 إلى 12 لوح: 1,000,000 جنيه\n"
+            "• من 14 إلى 18 لوح: 1,500,000 جنيه\n\n"
+            "📍 نطاق العمل: عطبرة وبربر وضواحيها.\n"
+            "للتواصل المباشر مع م. جلال الدين الصادق: 0113100906"
+        )
     
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
+    elif any(word in text for word in ["تحكم", "ats", "امبير", "2", "كهرباء"]):
+        return (
+            "⚡ *أسعار منظومة التحكم والتبديل الأوتوماتيكي (ATS) (شاملة المعدات والتركيب):*\n\n"
+            "• 63 أمبير: 750,000 جنيه\n"
+            "• 100 أمبير: 1,250,000 جنيه\n\n"
+            "📍 نطاق العمل: عطبرة وبربر وضواحيها.\n"
+            "للتواصل المباشر مع م. جلال الدين الصادق: 0113100906"
+        )
+    
+    else:
+        return (
+            "مرحباً بك في *مفوضية الصاعد لأنظمة الطاقة الشمسية والتحكم* ☀️⚡\n"
+            "إدارة المهندس/ جلال الدين الصادق.\n\n"
+            "الرجاء اختيار أحد الخيارات التالية:\n"
+            "1️⃣ للاستفسار عن أسعار تركيب الطاقة الشمسية.\n"
+            "2️⃣ للاستفسار عن أسعار ونظام التحكم (ATS).\n"
+            "📍 نخدم مناطق: عطبرة وبربر وضواحيها.\n\n"
+            "للتواصل الهاتفي / واتساب: 0113100906"
+        )
 
-    if (mode && token === VERIFY_TOKEN) {
-        res.status(200).send(challenge);
-    } else {
-        res.sendStatus(403);
-    }
-});
+def send_whatsapp_message(phone, text):
+    # دالة إرسال الرسالة عبر Meta WhatsApp Cloud API
+    # (تتطلب توكن وصول خاص من حساب مطوري فيسبوك)
+    print(f"Sending to {phone}: {text}")
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
