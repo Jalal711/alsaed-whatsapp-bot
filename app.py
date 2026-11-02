@@ -7,8 +7,7 @@ app = Flask(__name__)
 # إعدادات التوثيق والاتصال
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "alsaid_solar_token_2026")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "ضع_رمز_الوصول_المؤقت_هنا")
-PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "1346890848518184")
-
+PHONE_NUMBER_ID = "1346890848518184"
 @app.route('/webhook', methods=['GET'])
 def verify_webhook():
     mode = request.args.get('hub.mode')
